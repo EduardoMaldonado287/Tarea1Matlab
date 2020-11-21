@@ -1,0 +1,287 @@
+classdef car_move < matlab.apps.AppBase
+
+    % Properties that correspond to app components
+    properties (Access = public)
+        UIFigure                  matlab.ui.Figure
+        equationEditFieldLabel    matlab.ui.control.Label
+        equationEditField         matlab.ui.control.EditField
+        runButton                 matlab.ui.control.Button
+        startEditFieldLabel       matlab.ui.control.Label
+        startEditField            matlab.ui.control.NumericEditField
+        endEditFieldLabel         matlab.ui.control.Label
+        endEditField              matlab.ui.control.NumericEditField
+        stepsEditFieldLabel       matlab.ui.control.Label
+        stepsEditField            matlab.ui.control.NumericEditField
+        carposxEditFieldLabel     matlab.ui.control.Label
+        carposxEditField          matlab.ui.control.NumericEditField
+        carposyEditFieldLabel     matlab.ui.control.Label
+        carposyEditField          matlab.ui.control.NumericEditField
+        xstartaxisEditFieldLabel  matlab.ui.control.Label
+        xstartaxisEditField       matlab.ui.control.NumericEditField
+        xendaxisEditFieldLabel    matlab.ui.control.Label
+        xendaxisEditField         matlab.ui.control.NumericEditField
+        ystartaxisEditFieldLabel  matlab.ui.control.Label
+        ystartaxisEditField       matlab.ui.control.NumericEditField
+        yendaxisEditFieldLabel    matlab.ui.control.Label
+        yendaxisEditField         matlab.ui.control.NumericEditField
+        curveareaEditFieldLabel   matlab.ui.control.Label
+        curveareaEditField        matlab.ui.control.NumericEditField
+        UIAxes                    matlab.ui.control.UIAxes
+    end
+
+    
+    methods (Access = private)
+        function [area, all_x_points, all_y_points] = get_area_below_curve(app, equation,... 
+                                                                           strategy_small_area_fun,... 
+                                                                           steps, start_point, end_point)
+  
+
+        end
+        function [area, x_points, y_points] = get_area_with_simposn_1_3(app, equation,left_point,...
+                                                                        right_point, height)
+        
+        end
+        
+        function [area, x_points, y_points] = get_area_with_simposn_3_8(app, equation,left_point,...
+                                                                        right_point, height)
+           
+                                                
+                  
+        end
+        
+        function [area, x_points, y_points] = get_trap_area_with_formula(app, equation, left_point,...
+                                                                         right_point, height)
+        end
+    end
+    
+
+    % Callbacks that handle component events
+    methods (Access = private)
+
+        % Button pushed function: runButton
+        function runButtonPushed(app, event)
+            % get all from UI
+%              equation = app.equationEditField.Value;
+%              start = app.startEditField.Value;
+%              finish = app.endEditField.Value;
+%              steps = app.stepsEditField.Value;
+%              x_start_axis = app.xstartaxisEditField.Value;
+%              x_end_axis = app.xendaxisEditField.Value;
+%              y_start_axis = app.ystartaxisEditField.Value;
+%              y_end_axis = app.yendaxisEditField.Value;
+%             hard coded values
+             equation = "x^2";
+             start = 0;
+             finish = 10;
+             steps = 1;
+             x_start_axis = -5;
+             x_end_axis = 50;
+             y_start_axis = -20;
+             y_end_axis = 150;
+            %convert the equation string function into an anonymus function
+            car_move_equation = matlabFunction(str2sym(equation));
+            % with hard coded values @(x) x^2
+            x_points = [start : steps : finish];
+            y_points = [];
+            
+            
+            axis(app.UIAxes, [x_start_axis..., 
+                              x_end_axis,...
+                              y_start_axis..., 
+                              y_end_axis])
+            % first iterate for getting the correct plot with the line
+            % that the car will pass
+            for index = 1 : length(x_points)
+                y_points(index) = car_move_equation(index);
+            end
+            
+            hold(app.UIAxes);
+            % plot for the trajectory
+            plot(app.UIAxes, x_points, y_points);
+            % plot for the car
+            plot_to_draw_car = plot(app.UIAxes,... 
+                                    x_points(1),...
+                                    y_points(1),...
+                                    'ro', 'MarkerFaceColor','red');
+            %move the car thru the line
+             for index = 1 : length(x_points)
+                y_pos = car_move_equation(x_points(index));
+                plot_to_draw_car.XData = x_points(index);
+                plot_to_draw_car.YData = y_pos;
+                drawnow
+                app.carposxEditField.Value = x_points(index);
+                app.carposyEditField.Value = y_pos;
+                %time to sleep thread
+                pause(0.25);
+             end
+             [area, x_p, y_p] = app.get_area_below_curve(car_move_equation, ...
+                                                         @app.get_area_with_simposn_1_3,...
+                                                         steps, start, finish);
+              app.curveareaEditField.Value = area
+        end
+    end
+
+    % Component initialization
+    methods (Access = private)
+
+        % Create UIFigure and components
+        function createComponents(app)
+
+            % Create UIFigure and hide until all components are created
+            app.UIFigure = uifigure('Visible', 'off');
+            app.UIFigure.Position = [100 100 640 546];
+            app.UIFigure.Name = 'MATLAB App';
+
+            % Create equationEditFieldLabel
+            app.equationEditFieldLabel = uilabel(app.UIFigure);
+            app.equationEditFieldLabel.HorizontalAlignment = 'right';
+            app.equationEditFieldLabel.Position = [31 247 52 22];
+            app.equationEditFieldLabel.Text = 'equation';
+
+            % Create equationEditField
+            app.equationEditField = uieditfield(app.UIFigure, 'text');
+            app.equationEditField.Position = [98 247 100 22];
+
+            % Create runButton
+            app.runButton = uibutton(app.UIFigure, 'push');
+            app.runButton.ButtonPushedFcn = createCallbackFcn(app, @runButtonPushed, true);
+            app.runButton.Position = [414 197 100 22];
+            app.runButton.Text = 'run';
+
+            % Create startEditFieldLabel
+            app.startEditFieldLabel = uilabel(app.UIFigure);
+            app.startEditFieldLabel.HorizontalAlignment = 'right';
+            app.startEditFieldLabel.Position = [44 207 29 22];
+            app.startEditFieldLabel.Text = 'start';
+
+            % Create startEditField
+            app.startEditField = uieditfield(app.UIFigure, 'numeric');
+            app.startEditField.Position = [88 207 100 22];
+
+            % Create endEditFieldLabel
+            app.endEditFieldLabel = uilabel(app.UIFigure);
+            app.endEditFieldLabel.HorizontalAlignment = 'right';
+            app.endEditFieldLabel.Position = [44 164 26 22];
+            app.endEditFieldLabel.Text = 'end';
+
+            % Create endEditField
+            app.endEditField = uieditfield(app.UIFigure, 'numeric');
+            app.endEditField.Position = [85 164 100 22];
+
+            % Create stepsEditFieldLabel
+            app.stepsEditFieldLabel = uilabel(app.UIFigure);
+            app.stepsEditFieldLabel.HorizontalAlignment = 'right';
+            app.stepsEditFieldLabel.Position = [35 128 35 22];
+            app.stepsEditFieldLabel.Text = 'steps';
+
+            % Create stepsEditField
+            app.stepsEditField = uieditfield(app.UIFigure, 'numeric');
+            app.stepsEditField.Position = [85 128 100 22];
+
+            % Create carposxEditFieldLabel
+            app.carposxEditFieldLabel = uilabel(app.UIFigure);
+            app.carposxEditFieldLabel.HorizontalAlignment = 'right';
+            app.carposxEditFieldLabel.Position = [440 154 55 22];
+            app.carposxEditFieldLabel.Text = 'car pos x';
+
+            % Create carposxEditField
+            app.carposxEditField = uieditfield(app.UIFigure, 'numeric');
+            app.carposxEditField.Position = [510 154 100 22];
+
+            % Create carposyEditFieldLabel
+            app.carposyEditFieldLabel = uilabel(app.UIFigure);
+            app.carposyEditFieldLabel.HorizontalAlignment = 'right';
+            app.carposyEditFieldLabel.Position = [440 107 55 22];
+            app.carposyEditFieldLabel.Text = 'car pos y';
+
+            % Create carposyEditField
+            app.carposyEditField = uieditfield(app.UIFigure, 'numeric');
+            app.carposyEditField.Position = [510 107 100 22];
+
+            % Create xstartaxisEditFieldLabel
+            app.xstartaxisEditFieldLabel = uilabel(app.UIFigure);
+            app.xstartaxisEditFieldLabel.HorizontalAlignment = 'right';
+            app.xstartaxisEditFieldLabel.Position = [211 236 64 22];
+            app.xstartaxisEditFieldLabel.Text = 'x start axis';
+
+            % Create xstartaxisEditField
+            app.xstartaxisEditField = uieditfield(app.UIFigure, 'numeric');
+            app.xstartaxisEditField.Position = [290 236 100 22];
+
+            % Create xendaxisEditFieldLabel
+            app.xendaxisEditFieldLabel = uilabel(app.UIFigure);
+            app.xendaxisEditFieldLabel.HorizontalAlignment = 'right';
+            app.xendaxisEditFieldLabel.Position = [206 197 60 22];
+            app.xendaxisEditFieldLabel.Text = 'x end axis';
+
+            % Create xendaxisEditField
+            app.xendaxisEditField = uieditfield(app.UIFigure, 'numeric');
+            app.xendaxisEditField.Position = [281 197 100 22];
+
+            % Create ystartaxisEditFieldLabel
+            app.ystartaxisEditFieldLabel = uilabel(app.UIFigure);
+            app.ystartaxisEditFieldLabel.HorizontalAlignment = 'right';
+            app.ystartaxisEditFieldLabel.Position = [212 154 63 22];
+            app.ystartaxisEditFieldLabel.Text = 'y start axis';
+
+            % Create ystartaxisEditField
+            app.ystartaxisEditField = uieditfield(app.UIFigure, 'numeric');
+            app.ystartaxisEditField.Position = [290 154 100 22];
+
+            % Create yendaxisEditFieldLabel
+            app.yendaxisEditFieldLabel = uilabel(app.UIFigure);
+            app.yendaxisEditFieldLabel.HorizontalAlignment = 'right';
+            app.yendaxisEditFieldLabel.Position = [211 107 60 22];
+            app.yendaxisEditFieldLabel.Text = 'y end axis';
+
+            % Create yendaxisEditField
+            app.yendaxisEditField = uieditfield(app.UIFigure, 'numeric');
+            app.yendaxisEditField.Position = [286 107 100 22];
+
+            % Create curveareaEditFieldLabel
+            app.curveareaEditFieldLabel = uilabel(app.UIFigure);
+            app.curveareaEditFieldLabel.HorizontalAlignment = 'right';
+            app.curveareaEditFieldLabel.Position = [75 46 62 22];
+            app.curveareaEditFieldLabel.Text = 'curve area';
+
+            % Create curveareaEditField
+            app.curveareaEditField = uieditfield(app.UIFigure, 'numeric');
+            app.curveareaEditField.Position = [152 46 100 22];
+
+            % Create UIAxes
+            app.UIAxes = uiaxes(app.UIFigure);
+            title(app.UIAxes, 'Title')
+            xlabel(app.UIAxes, 'X')
+            ylabel(app.UIAxes, 'Y')
+            app.UIAxes.Position = [9 281 613 244];
+
+            % Show the figure after all components are created
+            app.UIFigure.Visible = 'on';
+        end
+    end
+
+    % App creation and deletion
+    methods (Access = public)
+
+        % Construct app
+        function app = car_move
+
+            % Create UIFigure and components
+            createComponents(app)
+
+            % Register the app with App Designer
+            registerApp(app, app.UIFigure)
+
+            if nargout == 0
+                clear app
+            end
+        end
+
+        % Code that executes before app deletion
+        function delete(app)
+
+            % Delete UIFigure when app is deleted
+            delete(app.UIFigure)
+        end
+    end
+end
